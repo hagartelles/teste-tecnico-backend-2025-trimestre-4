@@ -1,52 +1,147 @@
-# teste-tecnico-backend-2025-trimestre-1
-Teste técnico para a posição de Backend Dev. Edição do primeiro trimestre de 2025.
+# teste-tecnico-backend-2025-trimestre-4
+Teste técnico para a posição de Backend Dev. Edição do quarto trimestre de 2025.
 
-## A proposta: Upload e Streaming de Vídeos + Cache + Docker
+## A proposta: Crawler assíncrono de CEPs + Fila + MongoDB
 
 A ideia é bem simples:
 
-- [ ] uma rota `POST /upload/video` que recebe um **único vídeo** com limite de 10MB e
-    - [ ] retornando o código de status 400 em caso de arquivo com tipo diferente de vídeo
-    - [ ] retornando o código de status 400 em caso de arquivo com tamanho maior que 10MB
-    - [ ] retornando o código de status 204 em caso de sucesso
-- [ ] uma rota `GET /static/video/:filename` que pode receber um Range por cabeçalho para indicar o offset de streaming
-    - [ ] retornando o código de status 404 em caso de não existência de um arquivo
-    - [ ] retornando o conteúdo completo caso nenhum range seja especificado com código de status 200 em caso o arquivo exista no servidor
-    - [ ] retornando a fatia desejada do conteúdo caso o range seja especificado com código de status 206
-    caso o arquivo exista no servidor
+- [ ] uma API que permita solicitar o processamento de um **range de CEPs**
+- [ ] cada CEP do range deve ser processado de forma **assíncrona**
+- [ ] os dados devem ser obtidos a partir da API pública do **ViaCEP**
+- [ ] os resultados e o progresso devem ser persistidos em um banco **MongoDB**
+
+---
+
+## API
+
+### Solicitação de crawl
+
+- [ ] uma rota `POST /cep/crawl` que recebe um range de CEPs no seguinte formato:
+
+```json
+{
+  "cep_start": "01000000",
+  "cep_end": "01001000"
+}
+```
+
+* [ ] validar:
+
+  * [ ] formato dos CEPs
+  * [ ] `cep_start` menor ou igual a `cep_end`
+  * [ ] tamanho máximo do range (critério livre)
+* [ ] criar um identificador único da requisição (`crawl_id`)
+* [ ] inserir **um item na fila para cada CEP do range**
+* [ ] retornar:
+
+  * [ ] código de status `202 Accepted`
+  * [ ] o `crawl_id` gerado
+
+---
+
+### Consulta de status
+
+* [ ] uma rota `GET /cep/crawl/:crawl_id` que retorna o status do processamento
+* [ ] o status deve conter, no mínimo:
+
+  * [ ] total de CEPs
+  * [ ] quantidade processada
+  * [ ] quantidade de sucessos
+  * [ ] quantidade de erros
+  * [ ] status geral da requisição (`pending`, `running`, `finished`, `failed`)
+* [ ] retornar:
+
+  * [ ] `404` caso o `crawl_id` não exista
+  * [ ] `200` caso exista
+
+---
+
+### (Opcional) Consulta de resultados
+
+* [ ] uma rota `GET /cep/crawl/:crawl_id/results`
+* [ ] retornar os resultados já processados
+* [ ] paginação simples é desejável
+
+---
+
+## Processamento assíncrono
+
+* [ ] o processamento dos CEPs deve ocorrer fora do ciclo da requisição HTTP
+* [ ] cada CEP deve ser consumido individualmente a partir de uma fila
+* [ ] para cada CEP:
+
+  * [ ] consultar a API do ViaCEP
+  * [ ] em caso de sucesso, persistir o endereço no MongoDB
+  * [ ] em caso de CEP inexistente, registrar o erro associado ao `crawl_id`
+  * [ ] em caso de falha temporária, permitir retry
+
+---
+
+## Fila assíncrona
+
+* [ ] sugerimos o uso do **ElasticMQ** em Docker
+  ([https://github.com/softwaremill/elasticmq](https://github.com/softwaremill/elasticmq)), por ser compatível com a API do Amazon SQS
+* [ ] o candidato pode utilizar outra solução de fila, desde que justifique a escolha
+* [ ] o sistema deve garantir que o consumo da fila **não exceda limites da API externa**
+
+```plain
+A API do ViaCEP pode aplicar limitação de requisições.
+O sistema deve ser capaz de controlar a taxa de processamento da fila,
+mesmo quando o usuário solicita ranges grandes de CEPs.
+
+O não controle da fila pode resultar em falhas, retries excessivos ou bloqueio
+da API externa.
+```
+
+---
+
+## Persistência
+
+* [ ] utilizar **MongoDB** para persistência dos dados
+* [ ] os dados devem estar associados à requisição que originou o processamento
+* [ ] o modelo de dados é livre, mas deve permitir:
+
+  * [ ] acompanhar progresso
+  * [ ] identificar erros
+  * [ ] consultar resultados por `crawl_id`
+
+---
+
+## Infraestrutura
 
 Para infra, vamos usar o seguinte conjunto:
 
-- [ ] um arquivo `Dockerfile` para fazer o build da imagem a partir da imagem `node:22-alpine`;
-- [ ] um arquivo `docker-compose.yml` para compor um ambiente com algum serviço de cache de sua escolha.
+* [ ] um arquivo `Dockerfile` para a aplicação
+* [ ] um arquivo `docker-compose.yml` contendo, no mínimo:
 
-```plain
-A ideia inicial é que os arquivos sejam armazenados dentro do volume do container da aplicação.
-Entretanto o sistema deve conseguir trocar facilmente o sistema de arquivos usado.
-(Isso não significa, entretanto, uma implementação extra de outro sistema de arquivos, apenas a
-capacidade de troca entre sistemas de arquivos)
+  * [ ] aplicação HTTP
+  * [ ] worker de processamento assíncrono
+  * [ ] MongoDB
+  * [ ] serviço de fila (ElasticMQ ou equivalente)
 
-Teremos um cache de 60s de TTL para cada arquivo.
-O arquivo deve estar disponível antes mesmo de ser persistido no sistema de arquivos.
-O arquivo só deve ser lido a partir do sistema de arquivos se não houver cache válido para o mesmo.
-```
+---
 
 ## Restrições
 
-A única limitação é o uso requerido da runtime `node.js`.
+A única limitação obrigatória é o uso da runtime **Node.js**.
 
-Você tem total liberdade para usar as demais bibliotecas que mais lhe fornecerem produtividade.
+Você tem total liberdade para escolher bibliotecas auxiliares, ORMs, drivers de fila
+e organização do projeto.
 
-Acaso você esteja utilizando este projeto como um meio de estudo, nós o aconselhamos a usar a biblioteca padrão para lidar com requisições web do Node.js, `http`.
+Acaso você esteja utilizando este projeto como meio de estudo, recomendamos o uso
+da biblioteca padrão `http` do Node.js para lidar com requisições web.
+
+---
 
 ## O que estamos avaliando
 
 Este teste busca avaliar as seguintes competências:
 
-1. Capacidade de uso correto de design patterns;
-2. Capacidade de interação com APIs de sistema;
-3. Capacidade de desenvolver soluções que usam o conceito de concorrência para extrair maior desempenho do hardware;
-4. Domínio sobre a linguagem JavaScript;
-5. Domínio sobre a runtime `node.js`;
-6. Capacidade de organização de código (Adendo: organize da forma que for mais familiarizado, não estamos olhando para a estrutura de pastas, mas sim para a coesão e o desacoplamento) e
-7. Capacidade de lidar com contêineres Docker.
+1. Integração com APIs externas;
+2. Uso correto de filas assíncronas;
+3. Controle de concorrência e taxa de processamento;
+4. Modelagem e uso de banco de dados MongoDB;
+5. Domínio sobre a linguagem JavaScript;
+6. Domínio sobre a runtime `node.js`;
+7. Capacidade de organização de código e separação de responsabilidades;
+8. Capacidade de lidar com contêineres Docker e ambientes compostos.
