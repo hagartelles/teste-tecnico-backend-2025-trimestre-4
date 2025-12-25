@@ -144,4 +144,38 @@ Este teste busca avaliar as seguintes competências:
 5. Domínio sobre a linguagem JavaScript;
 6. Domínio sobre a runtime `node.js`;
 7. Capacidade de organização de código e separação de responsabilidades;
-8. Capacidade de lidar com contêineres Docker e ambientes compostos.
+8. Capacidade de lidar com contêineres Docker e ambientes compostos
+
+---
+
+## Project setup
+
+```bash
+$ npm install
+```
+
+## Compile and run the project
+
+```bash
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+
+# production mode
+$ npm run start:prod
+```
+
+## Run tests
+
+```bash
+# unit tests
+$ npm run test
+
+# e2e tests
+$ npm run test:e2e
+
+# test coverage
+$ npm run test:cov
+```

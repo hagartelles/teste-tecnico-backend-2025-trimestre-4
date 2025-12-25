@@ -1,0 +1,35 @@
+services:
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  sqs:
+    image: softwaremill/elasticmq-native
+    ports:
+      - "9324:9324"  # SQS API
+      - "9325:9325"  # UI Web
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf
+    environment:
+      - CONFIG_FILE=/opt/elasticmq.conf
+
+  app:
+    build: .                     
+    ports:
+      - "${NEST_PORT}:${NEST_PORT}"              
+    environment:
+      - NEST_PORT=${NEST_PORT}                 
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/crawler}
+      - SQS_ENDPOINT=${SQS_ENDPOINT:-http://sqs:9324}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-x}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-x}
+    depends_on:              
+      - mongo
+      - sqs
+
+volumes:                    
+  mongo_data:
