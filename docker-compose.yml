@@ -5,6 +5,11 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   sqs:
     image: softwaremill/elasticmq-native
@@ -13,8 +18,7 @@ services:
       - "9325:9325"  # UI Web
     volumes:
       - ./elasticmq.conf:/opt/elasticmq.conf
-    environment:
-      - CONFIG_FILE=/opt/elasticmq.conf
+    command: ["-Dconfig.file=/opt/elasticmq.conf"]
 
   app:
     build: .                     
@@ -28,8 +32,10 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-x}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-x}
     depends_on:              
-      - mongo
-      - sqs
+      mongo:
+          condition: service_healthy
+      sqs:
+          condition: service_started
 
 volumes:                    
   mongo_data:

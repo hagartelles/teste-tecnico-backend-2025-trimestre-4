@@ -1,0 +1,75 @@
+{
+	"info": {
+		"_postman_id": "dbceec2b-846a-4c93-a8cc-a395fcdc4924",
+		"name": "teste-tecnico",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "30381211"
+	},
+	"item": [
+		{
+			"name": "range of postal codes",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"cep_start\": \"01001000\",\r\n  \"cep_end\": \"01001009\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:3000/cep/crawl",
+				"description": "A `POST /cep/crawl` route that receives a range of postal codes in the following format:\n\n\\`\\`\\`json  \n{  \n\"cep_start\": \"01000000\",  \n\"cep_end\": \"01001000\"  \n}"
+			},
+			"response": []
+		},
+		{
+			"name": "get processing status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:3000/cep/crawl/694e2f760d371ff3bf0d69e2",
+				"description": "Returns the processing status.  \n  \nhttp://localhost:3000/cep/crawl/{crawl_id}"
+			},
+			"response": []
+		},
+		{
+			"name": "get the already processed results",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/cep/crawl/694e2f760d371ff3bf0d69e2/results?page=1&limit=10",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"cep",
+						"crawl",
+						"694e2f760d371ff3bf0d69e2",
+						"results"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				},
+				"description": "A route `GET` [http://localhost:3000/cep/crawl/{](http://localhost:3000/cep/crawl/{}/results?page=1&limit=10)[crawl_id}](http://localhost:3000/cep/crawl/{crawl_id})[/results?page=1&amp;limit=10](http://localhost:3000/cep/crawl/{}/results?page=1&limit=10) returns the already processed results.\n\nSimple pagination."
+			},
+			"response": []
+		}
+	]
+}

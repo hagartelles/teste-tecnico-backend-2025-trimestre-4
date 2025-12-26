@@ -2,16 +2,20 @@ FROM node:22.18.0-alpine3.22
 
 RUN apk add --no-cache openssl
 
-WORKDIR /test
+WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci --only=production && npm cache clean --force
+
+RUN npm ci
 
 COPY . .
 
-RUN npm run build
+RUN rm -rf node_modules && npm ci --only=production && npm cache clean --force
 
-EXPOSE 3000
+EXPOSE ${NEST_PORT:-3000}
 
-CMD ["npm", "run", "start:prod"]
+USER node
+
+CMD ["node", "dist/main.js"]
