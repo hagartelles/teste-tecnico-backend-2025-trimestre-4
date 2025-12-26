@@ -15,10 +15,6 @@ export class SqsConfigService {
     return this.buildQueueConfig();
   }
 
-  getConsumerConfig(): QueueConfig {
-    return this.buildQueueConfig();
-  }
-
   private buildQueueConfig(): QueueConfig {
     const endpoint = this.configService.getOrThrow<string>('SQS_ENDPOINT');
     const region = this.configService.getOrThrow<string>('AWS_REGION');
