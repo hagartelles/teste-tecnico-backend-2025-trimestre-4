@@ -25,8 +25,8 @@ export class IsCepRangeValidConstraint implements ValidatorConstraintInterface {
     const start = parseInt(object.cep_start.replace(/\D/g, ''));
     const end = parseInt(args.value.replace(/\D/g, ''));
 
-    if (start > end) return 'cep_start não pode ser maior que cep_end';
-    if (end - start > 1000) return 'O range máximo permitido é de 1000 CEPs por requisição';
+    if (start > end) return 'cep_start cannot be greater than cep_end.';
+    if (end - start > 1000) return 'The maximum allowed range is 1000 postal codes per request.';
     
     return 'Range de CEP inválido';
   }

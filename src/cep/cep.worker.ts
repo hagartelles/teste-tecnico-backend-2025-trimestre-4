@@ -1,5 +1,3 @@
-// src/cep/cep.worker.ts
-
 import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
 import { SqsMessageHandler } from '@ssut/nestjs-sqs';
 import type { Message } from '@aws-sdk/client-sqs';
